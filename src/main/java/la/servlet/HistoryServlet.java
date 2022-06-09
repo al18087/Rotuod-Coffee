@@ -1,6 +1,7 @@
 package la.servlet;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -10,60 +11,52 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import la.bean.CartBean;
-import la.bean.CustomerBean;
+import la.bean.LoginBean;
+import la.bean.ProductBean;
 import la.dao.DAOException;
-import la.dao.OrderDAO;
+import la.dao.HistoryDAO;
 
 /**
- * Servlet implementation class OrderServlet
+ * Servlet implementation class HistoryServlet
  */
-@WebServlet("/OrderServlet")
-public class OrderServlet extends HttpServlet {
+@WebServlet("/HistoryServlet")
+public class HistoryServlet extends HttpServlet {
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		// 注文処理はセッションとcartが存在していることが大前提
-		HttpSession session = request.getSession(false);
-		if (session == null) {
-			request.setAttribute("message", "セッションが切れています。もう一度トップページより操作してください。");
-			gotoPage(request, response, "/errInternal.jsp");
-			return;
-		}
-
-		CartBean cart = (CartBean)session.getAttribute("cart");
-		// カートがない
-		if (cart == null) {
-			request.setAttribute("message", "正しく操作してください。");
+		
+		HttpSession session = request.getSession(true);
+		LoginBean login = (LoginBean)session.getAttribute("login");
+		
+		// ログインしていない場合は不正
+		if (login == null) {
+			request.setAttribute("message", "ログインしてください。");
 			gotoPage(request, response, "/errInternal.jsp");
 			return;
 		}
 		
 		try {
 			String action = request.getParameter("action");
-			if (action.equals("order")) {
-				OrderDAO dao = new OrderDAO();
-				CustomerBean customer = (CustomerBean)session.getAttribute("customer");
-				int orderId = dao.saveOrder(cart, customer);
+			if (action.equals("history")) {
+				String customerName = request.getParameter("name");
+				HistoryDAO dao = new HistoryDAO();
 				
-				// セッション情報をクリアする
-				session.removeAttribute("cart");
-				session.removeAttribute("customer");
+				// ユーザが購入した商品履歴を取得
+				List<List<ProductBean>> historyList = dao.findHistory(customerName);
 				
-				// 伝票番号をクライアントに送信する
-				request.setAttribute("orderId", Integer.valueOf(orderId));
-				
-				gotoPage(request, response, "/order.jsp");
+				request.setAttribute("history", historyList);
+				gotoPage(request, response, "/history.jsp");
 			}
 			
 		} catch (DAOException e) {
 			e.printStackTrace();
-			request.setAttribute("message", "内部エラーが発生しました。");
+			request.setAttribute("message", "正しく操作してください。");
 			gotoPage(request, response, "/errInternal.jsp");
 		}
+		
 	}
 	
 	private void gotoPage(HttpServletRequest request, HttpServletResponse response, String page)

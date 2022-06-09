@@ -39,7 +39,6 @@ public class CartServlet extends HttpServlet {
 				// 初めてのクライアントの場合
 				if (cart == null) {
 					cart = new CartBean();
-					session.setAttribute("cart", cart);
 				}
 				
 				// 商品コードの商品を取得する
@@ -48,6 +47,7 @@ public class CartServlet extends HttpServlet {
 				
 				// カートに追加する
 				cart.addCart(bean, quantity);
+				session.setAttribute("cart", cart);
 				gotoPage(request, response, "/cart.jsp");
 			}
 			

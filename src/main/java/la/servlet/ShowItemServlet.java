@@ -38,7 +38,7 @@ public class ShowItemServlet extends HttpServlet {
 					gotoPage(request, response, "/errInternal.jsp");
 					return;
 				}
-				session.getAttribute("login");
+				// session.getAttribute("login");
 				gotoPage(request, response, "/top.jsp");
 			} 
 			
